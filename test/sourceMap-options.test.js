@@ -235,6 +235,81 @@ describe("sourceMap option", () => {
         expect(getWarnings(stats)).toMatchSnapshot("warnings");
         expect(getErrors(stats)).toMatchSnapshot("errors");
       });
+
+      it(`should generate and emit source maps when value has "false" value, but the "sassOptions.sourceMap" has the "true" value (${implementationName}) (${syntax})`, async () => {
+        const testId = getTestId("language", syntax);
+        const options = {
+          implementation: getImplementationByName(implementationName),
+          sourceMap: "external",
+          sassOptions: {
+            outFile: "style.css",
+          },
+        };
+        const compiler = getCompiler(testId, {
+          rules: [
+            {
+              test: /\.s[ac]ss$/i,
+              type: "asset/resource",
+              generator: {
+                filename: "[name].css",
+              },
+              use: [
+                {
+                  loader: path.join(__dirname, "../src/cjs.js"),
+                  options,
+                },
+              ],
+            },
+          ],
+        });
+        const stats = await compile(compiler);
+        const { compilation } = stats;
+
+        expect(compilation.getAsset("language.css")).toBeDefined();
+        expect(compilation.getAsset("style.css.map")).toBeDefined();
+        expect(getWarnings(stats)).toMatchSnapshot("warnings");
+        expect(getErrors(stats)).toMatchSnapshot("errors");
+      });
+
+      it(`should generate and emit source maps when value has "false" value, but the "sassOptions.sourceMap" has the "string" value (${implementationName}) (${syntax})`, async () => {
+        const testId = getTestId("language", syntax);
+        const options = {
+          implementation: getImplementationByName(implementationName),
+          sourceMap: "external",
+          sassOptions: {
+            outFile: "assets/[name].css",
+            omitSourceMapUrl: false,
+            sourceMapEmbed: false,
+            sourceMapContents: false,
+          },
+        };
+        const compiler = getCompiler(testId, {
+          rules: [
+            {
+              test: /\.s[ac]ss$/i,
+              type: "asset/resource",
+              generator: {
+                filename: "assets/[name].css",
+              },
+              use: [
+                {
+                  loader: path.join(__dirname, "../src/cjs.js"),
+                  options,
+                },
+              ],
+            },
+          ],
+        });
+        const stats = await compile(compiler);
+        const { compilation } = stats;
+
+        expect(compilation.getAsset("assets/language.css")).toBeDefined();
+        expect(
+          compilation.getAsset(`assets${path.sep}language.css.map`)
+        ).toBeDefined();
+        expect(getWarnings(stats)).toMatchSnapshot("warnings");
+        expect(getErrors(stats)).toMatchSnapshot("errors");
+      });
     });
   });
 });
